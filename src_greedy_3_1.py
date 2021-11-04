@@ -11,14 +11,14 @@ def greedy(B, W):
         Q: i-th keyword is mapped to Q[i]-th advertiser
         revenue: Total revenue obtained.
     '''
-    nA = len(B)
-
-    M = [0]*nA
+    n = len(B)
+    m = len(W[0])
+    M = [0]*n
     revenue = 0
     Q = [-1]*len(W[0]) # advertiser that bid for i-th query.
     sortedW = []
-    for i in range(len(W)):
-        for j in range(len(W[i])):
+    for i in range(n):
+        for j in range(m):
             sortedW.append([i, j, W[i][j]])
     sortedW.sort(key=lambda x: x[2], reverse=True)
     for w_ij in sortedW:
@@ -30,7 +30,7 @@ def greedy(B, W):
         # Bid is possible when
         # - Advertiser has enough money left.
         # - The keyword was previously unassigned.
-        if B[ad_num] > bid and Q[kw_num] == -1:
+        if B[ad_num] >= bid and Q[kw_num] == -1:
             revenue += bid
             B[ad_num] -= bid
             M[ad_num] += bid
