@@ -2,7 +2,7 @@ import os
 import random
 import numpy as np
 
-def greedy(B, W):
+def greedy(B, W, n, m):
     '''
     Args:
         B: Budget of the i-th advertiser
@@ -11,8 +11,6 @@ def greedy(B, W):
         Q: i-th keyword is mapped to Q[i]-th advertiser
         revenue: Total revenue obtained.
     '''
-    n = len(B)
-    m = len(W[0])
     M = [0]*n
     revenue = 0
     Q = [-1]*len(W[0]) # advertiser that bid for i-th query.
@@ -45,6 +43,6 @@ if __name__== "__main__":
     B = [2, 3, 30]
     print(f'W: {W}')
     print(f'B: {B}')
-    Q, revenue = greedy(B, W)
+    Q, revenue = greedy(B, W, n, m)
     print(Q)
     print(revenue)
