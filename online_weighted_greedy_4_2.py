@@ -27,6 +27,11 @@ def online_weighted_greedy(B, W, n, m):
     for i in range(m):
 
         ad_num, bid = online_weighted_greedy_step(B, M, W, n, i)
+
+        # No possible allocation exists.
+        if ad_num == -1:
+            continue
+        
         M[ad_num] += bid
         revenue += bid
         Q[i] = ad_num

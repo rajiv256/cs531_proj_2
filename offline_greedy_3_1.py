@@ -39,9 +39,9 @@ def greedy(B, W):
 
 
 if __name__== "__main__":
-    Alen = 3
-    Qlen = 2
-    W = np.random.randint(4, 10, size=(Alen, Qlen))
+    n = 3
+    m = 2
+    W = np.random.randint(4, 10, size=(n, m))
     B = [2, 3, 30]
     print(f'W: {W}')
     print(f'B: {B}')
