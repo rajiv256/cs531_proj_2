@@ -17,7 +17,6 @@ def min_lp_solver(c, A_ub, b_ub, bounds):
      success: True
            x: array([ 9.99999989, -2.99999999])
     '''
-    # Negative sign to `c` as this function minimizes by default.
     res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=bounds)
     return res
 
