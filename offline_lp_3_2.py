@@ -1,7 +1,7 @@
 from scipy.optimize import linprog
 import numpy as np
 
-def lp_solver(c, A_ub, b_ub, bounds):
+def max_lp_solver(c, A_ub, b_ub, bounds):
     '''
     Args:
         c: The below linprog minimizes the objective function. So flip  the sign in c.
@@ -16,7 +16,7 @@ def lp_solver(c, A_ub, b_ub, bounds):
      success: True
            x: array([ 9.99999989, -2.99999999])
     '''
-    res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=bounds)
+    res = linprog(-c, A_ub=A_ub, b_ub=b_ub, bounds=bounds)
     return res
 
 
@@ -77,7 +77,7 @@ def test_naive_lp_solver(W, B, n, m):
     b = fill_b(n, m, B)
     bounds = [(0, 1.0)]*(n*m)
     c = -W.flatten() # Because above lp solver minimizes the objective.
-    res = lp_solver(c, A, b, bounds)
+    res = max_lp_solver(c, A, b, bounds)
     X = res["x"]
     Q, revenue = naive_lp(X, W, B, n, m)
     return Q, revenue
