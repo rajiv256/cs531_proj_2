@@ -1,7 +1,7 @@
 import os
 import random
 import numpy as np
-import pulp
+import pickle
 
 def greedy(B, W, n, m):
     '''

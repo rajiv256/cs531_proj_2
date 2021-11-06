@@ -1,0 +1,1 @@
+This folder contains mostly test scripts. No source code would be kept here.
