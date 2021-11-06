@@ -10,7 +10,8 @@ def create_affine_expression(coeffs, var_names):
 
 
 def create_constraint(coeffs, var_names, sense, rhs):
-    """
+    """Creates a constraint based on the args
+
     Args:
         coeffs: coefficients of the constraints
         vars: Names of the vars
@@ -27,11 +28,13 @@ def create_constraint(coeffs, var_names, sense, rhs):
 
 
 def test_affine_expression(coeffs=[1, 2, 3], var_names=['x_0', 'x_1', 'x_2']):
+    print(f'coeffs: {coeffs} | var_names: {var_names}')
     affine = create_affine_expression(coeffs, var_names)
     print(affine)
 
 
 def test_constraint(coeffs=[1, 2, 3], var_names=['x_0', 'x_1', 'x_2'], sense=pl.LpConstraintLE, rhs=1):
+    print(f'coeffs: {coeffs} | var_names: {var_names} | sense: {sense} | rhs: {rhs}')
     constraint = create_constraint(coeffs, var_names, sense, rhs)
     print(constraint)
 

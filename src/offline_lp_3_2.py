@@ -1,6 +1,6 @@
 from scipy.optimize import linprog
 import numpy as np
-import pulp
+from pulp_utils import create_constraint, create_affine_expression, create_variable
 
 def max_lp_solver(c, A_ub, b_ub, bounds):
     '''

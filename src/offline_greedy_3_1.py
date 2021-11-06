@@ -2,6 +2,8 @@ import os
 import random
 import numpy as np
 import pickle
+from data_utils import create_data_vars
+
 
 def greedy(B, W, n, m):
     '''
@@ -41,12 +43,11 @@ def greedy(B, W, n, m):
 
 
 if __name__== "__main__":
-    n = 3
-    m = 2
-    W = np.random.randint(4, 10, size=(n, m))
-    B = [2, 3, 30]
-    print(f'W: {W}')
-    print(f'B: {B}')
+    data = create_data_vars('ds0')
+    n = data['n']
+    m = data['m']
+    W = data['W']
+    B = data['B']
     Q, revenue = greedy(B, W, n, m)
-    print(Q)
-    print(revenue)
+
+    print(f'Q:\n{Q}\nrevenue:\n{revenue}')

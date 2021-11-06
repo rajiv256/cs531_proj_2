@@ -211,34 +211,10 @@ def online_dual_lp(B, W, n, m, eps):
     return Q, revenue
 
 
-def expand_W(W, kw_nums):
-    """Transforms W from containing bids for keywords to contain bids for queries. This is done using
-    np.take(https://numpy.org/doc/stable/reference/generated/numpy.take.html). Now we can directly apply the weights
-    like we did in the greedy setting.
-    Args:
-        W:
-        kw_nums:
-    Returns:
 
-    """
-    W_new = np.take(W, indices=kw_nums, axis=1)
-    return W_new
 
 
 if __name__ == "__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    n = 4
-    r = 2
-    m = 10
-
-    W = np.random.randint(1, 10, (n, r))
-    B = np.random.randint(2, 10, n)
-    kw_nums = np.random.randint(0, r, m)
-    bids = expand_W(W, kw_nums) # (n*m)
-
-    c = bids.flatten()
-    A = fill_A(n, m, bids)
-    b = fill_b(n, m, B)
-    eps = 0.1
-    Q, revenue = online_dual_lp(B, bids, n, m, eps)
-    print(Q, revenue)
+    # do something
+    x = 0

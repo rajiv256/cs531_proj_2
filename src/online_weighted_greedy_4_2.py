@@ -52,12 +52,4 @@ def online_weighted_greedy(B, W, n, r, kw_nums):
 
 if __name__ == "__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    n = 4
-    r = 2
-    m = 10
-    W = np.random.randint(1, 10, (n, m))
-    B = np.random.randint(2, 10, (n))
-    kw_nums = np.random.randint(0, r, (m))
-    Q, revenue = online_weighted_greedy(B, W, n, r, kw_nums)
-    print(Q)
-    print(revenue)
+    x = 0
