@@ -1,5 +1,4 @@
-# cs531_proj_2
-Sponsored Keyword search
+# Sponsored Keyword search
 
 # Description of directories and files.
 
