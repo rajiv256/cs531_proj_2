@@ -67,7 +67,7 @@ def get_results(data_alias='ds0'):
     Returns:
         results: A dictionary with keys as query assignments `Q` and revenue `revenue`.
     """
-    data = create_data_vars('ds0')
+    data = create_data_vars(data_alias)
     n = data['n']
     m = data['m']
     W = data['W']
@@ -84,4 +84,4 @@ def get_results(data_alias='ds0'):
 
 if __name__ == "__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    print(get_results('ds0')['revenue'])
+    print(get_results('ds1')['revenue'])
