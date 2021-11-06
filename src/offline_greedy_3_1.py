@@ -42,6 +42,28 @@ def greedy(B, W, n, m):
     return Q, revenue
 
 
+def get_results(data_alias='ds0'):
+    """
+    This function makes it easy to get numbers of slides. This is a common function in all problem files.
+    Args:
+        data_alias:
+
+    Returns:
+        results: A dictionary with keys as query assignments `Q` and revenue `revenue`.
+    """
+    data = create_data_vars('ds0')
+    n = data['n']
+    m = data['m']
+    W = data['W']
+    B = data['B']
+    Q, revenue = greedy(B, W, n, m)
+    results = {
+        'Q': Q,
+        'revenue': revenue
+    }
+    return results
+
+
 if __name__== "__main__":
     data = create_data_vars('ds0')
     n = data['n']

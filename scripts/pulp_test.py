@@ -41,6 +41,7 @@ def test_constraint(coeffs=[1, 2, 3], var_names=['x_0', 'x_1', 'x_2'], sense=pl.
 
 def test_0(solver_type):
     model = pl.LpProblem("Example", pl.LpMaximize)
+    print(solver_type)
     solver = pl.getSolver(solver_type)
     _var = pl.LpVariable('a', 0, 1)
     _var2 = pl.LpVariable('a2', 0, 2)

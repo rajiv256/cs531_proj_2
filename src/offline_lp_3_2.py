@@ -1,9 +1,16 @@
 from scipy.optimize import linprog
 import numpy as np
-from pulp_utils import create_constraint, create_affine_expression, create_variable
+import math
+
+import configs
+from pulp_utils import optimize_lp
+import pulp as pl
+from data_utils import create_data_vars
+
 
 def max_lp_solver(c, A_ub, b_ub, bounds):
-    '''
+    """
+
     Args:
         c: The below linprog minimizes the objective function. So flip  the sign in c.
         bounds: (min, max) bounds of each of the x_i. Set default to (0, 1.0)
@@ -16,11 +23,21 @@ def max_lp_solver(c, A_ub, b_ub, bounds):
       status: 0
      success: True
            x: array([ 9.99999989, -2.99999999])
-    '''
-    # Using -c as the linprog usually minimizes. Please verify this.
-    res = linprog(-c, A_ub=A_ub, b_ub=b_ub, bounds=bounds)
-    return res
+    """
+    # model = pl.LpProblem("Example", pl.LpMaximize)
+    # solver_type='PULP_CBC_CMD'
+    # solver = pl.getSolver(solver_type)
+    # var_names = ['x_'+str(i) for i in range(len(c))]
+    # variables = [pl.LpVariable(name=var_names[i]) for i in range(len(var_names))]
+    # constraints = [create_constraint(A_ub[i], variables, sense=pl.LpConstraintLE, name='co_'+str(i), rhs=b_ub[i]) for i in range(len(A_ub))]
+    # for constraint in constraints:
+    #     model.addConstraint(constraint)
+    # obj = pl.lpDot(c, variables)
+    # model += obj
+    solver = pl.getSolver(configs.SOLVER_TYPE)
+    obj_value, values = optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=solver)
 
+    print(obj_value, values)
 
 def fill_A(n, m, W):
     '''
@@ -83,19 +100,16 @@ def test_naive_lp_solver(W, B, n, m):
     bounds = [(0, 1.0)]*(n*m)
     c = W.flatten()
     res = max_lp_solver(c, A, b, bounds)
-    X = res["x"]
-    Q, revenue = naive_lp(X, W, B, n, m)
-    return Q, revenue
+    # X = res["x"]
+    # Q, revenue = naive_lp(X, W, B, n, m)
+    # return Q, revenue
 
 if __name__=="__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    n = 4
-    m = 2
-    W = np.random.randint(1, 10, (n, m))
-    B = np.random.randint(2, 10, (n))
+    data = create_data_vars('ds0')
+    n = data['n']
+    m = data['m']
+    W = data['W']
+    B = data['B']
 
-    Q, revenue = test_naive_lp_solver(W, B, n, m)
-    print(W)
-    print(B)
-    print(Q)
-    print(revenue)
+    _ = test_naive_lp_solver(W, B, n, m)
