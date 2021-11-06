@@ -11,7 +11,7 @@ def greedy(B, W, n, m):
         B: Budget of the i-th advertiser
         W: 2D array. W[i][j] refers to the bid value of i-th advertiser to j-th keyword.
     Returns:
-        Q: i-th keyword is mapped to Q[i]-th advertiser
+        Q: i-th keyword is mapped to Q[i]-th advertiser. Q[i] = -1 means that the i-th query is unassigned.
         revenue: Total revenue obtained.
     '''
     M = [0]*n
