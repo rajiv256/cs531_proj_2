@@ -1,6 +1,7 @@
 import os
 import random
 import numpy as np
+import pulp
 
 def greedy(B, W, n, m):
     '''
