@@ -1,6 +1,14 @@
 # cs531_proj_2
 Sponsored Keyword search
 
+# Description of directories and files.
+
+- `src`: Contains all the source files.
+- `data`: Contains data files and `gen.py` by Alex
+- `scripts`: Some experiments with `pulp` and data files.
+- `src/pulp_utils.py`: Functions for creating optimization variables, constraints, objectives etc.,
+- `src/data_utils.py`: Contains preprocessing utils for data pickle files. We will get the B, W, A etc., from here.
+
 # Before Running the project
 Navigate to the root folder of the project and run
 > pip install -r requirements.txt
