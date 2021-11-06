@@ -1,6 +1,7 @@
 import math
+
 import pulp as pl
-from configs import SOLVER_TYPE
+
 
 def create_affine_expression(coeffs, variables):
     assert len(coeffs) == len(
