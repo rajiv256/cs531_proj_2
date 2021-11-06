@@ -52,7 +52,7 @@ def optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=None):
     model = pl.LpProblem("OptimizeModel", objective)
 
     var_names = ['x_' + str(i) for i in range(len(c))]
-    variables = [pl.LpVariable(name=var_names[i]) for i in range(len(var_names))]
+    variables = [pl.LpVariable(name=var_names[i], lowBound=0, upBound=1.0) for i in range(len(var_names))]
     constraints = [create_constraint(A_ub[i], variables, sense=pl.LpConstraintLE, name='co_' + str(i), rhs=b_ub[i]) for
                    i in range(len(A_ub))]
     for constraint in constraints:

@@ -1,6 +1,4 @@
-import os
-import numpy as np
-import random
+from data_utils import create_data_vars
 
 
 # In the online setting, "m" value is not known. We do know "r" which is the no. of unique key words.
@@ -32,7 +30,7 @@ def online_greedy_step(B, M, W, n, kw_num):
     return optimal_ad_num, optimal_bid
 
 
-def online_greedy(B, W, n, r, kw_nums):
+def online_greedy(B, W, n, r, m, kw_nums):
     """
     Args:
         B: (n), budgets
@@ -46,7 +44,6 @@ def online_greedy(B, W, n, r, kw_nums):
         revenue: Revenue accrued
     """
     M = [0] * n
-    m = len(kw_nums)
     revenue = 0
     Q = [-1]*m
 
@@ -61,6 +58,30 @@ def online_greedy(B, W, n, r, kw_nums):
     return Q, revenue
 
 
+def get_results(data_alias='ds0'):
+    """
+    This function makes it easy to get numbers of slides. This is a common function in all problem files.
+    Args:
+        data_alias:
+
+    Returns:
+        results: A dictionary with keys as query assignments `Q` and revenue `revenue`.
+    """
+    data = create_data_vars('ds0')
+    n = data['n']
+    m = data['m']
+    W = data['W']
+    B = data['B']
+    kw_nums = data['kw_nums']
+    r = data['r']
+    Q, revenue = online_greedy(B, W, n, r, m, kw_nums)
+    results = {
+        'Q': Q,
+        'revenue': revenue
+    }
+    return results
+
+
 if __name__ == "__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    x = 0
+    print(get_results('ds0')['revenue'])

@@ -26,22 +26,24 @@ def max_lp_solver(c, A_ub, b_ub, bounds):
     obj_value, values = optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=solver)
 
     print(obj_value, values)
+    return obj_value, values
 
 
-def fill_A(n, m, W):
+def fill_A(n, m, W, kw_nums):
     '''
     Args:
         n: #advertisers
         m: #keywords
     '''
-    A = np.zeros((n+m, n*m))
+    A = np.zeros((n + m, n * m))
     # First m rows for the ∑_i x_ij <= 1 constraints.
     for i in range(m):
         A[i, i::m] = 1
     # Next n rows will have ∑_j w_ij*x_ij <= B_i for i in 1..n
     for i in range(n):
         for j in range(m):
-            A[m+i, i*m + j] = W[i][j]
+            kw_num = kw_nums[j]
+            A[m + i, i * m + j] = W[i][kw_num]
     # A has a total of m + n rows and m*n columns.
     return A
 
@@ -54,7 +56,7 @@ def fill_b(n, m, B):
     return b
 
 
-def naive_lp(X, W, B, n, m):
+def post_process(X, B, W, n, r, m, kw_nums):
     '''
     Args:
         X: n*m size array. (i*n + m)-th index contains the probability with which i-th advertiser gets the j-th keyword.
@@ -70,35 +72,74 @@ def naive_lp(X, W, B, n, m):
     sortedX = [(index, x) for index, x in enumerate(X)]
     sortedX.sort(key=lambda x: x[1], reverse=True)
     for index, prob in sortedX:
-        ad_num = int(index/m)
-        kw_num = index%m
+        ad_num = int(index / m)
+        q_num = index % m
+        kw_num = kw_nums[q_num]
         bid = W[ad_num][kw_num]
         # 0 means there is no bid.
         if bid == 0:
             continue
-        if Q[kw_num] == -1 and bid <= B[ad_num]:
+        if Q[q_num] == -1 and bid <= B[ad_num]:
             M[ad_num] += bid
             B[ad_num] -= bid
-            Q[kw_num] = ad_num
+            Q[q_num] = ad_num
             revenue += bid
     return Q, revenue
 
-def test_naive_lp_solver(W, B, n, m):
-    A = fill_A(n, m, W)
-    b = fill_b(n, m, B)
-    bounds = [(0, 1.0)]*(n*m)
-    c = W.flatten()
-    res = max_lp_solver(c, A, b, bounds)
-    # X = res["x"]
-    # Q, revenue = naive_lp(X, W, B, n, m)
-    # return Q, revenue
 
-if __name__=="__main__":
-    # When testing, substitute the variables n, m, W, B with appropriate values.
+def expand_W(W, kw_nums):
+    """Transforms W from containing bids for keywords to contain bids for queries. This is done using
+    np.take(https://numpy.org/doc/stable/reference/generated/numpy.take.html). Now we can directly apply the weights
+    like we did in the greedy setting.
+    Args:
+        W:
+        kw_nums:
+    Returns:
+
+    """
+    W_new = np.take(W, indices=kw_nums, axis=1)
+    return W_new
+
+
+def naive_lp_solver(B, W, n, r, m, kw_nums):
+    A = fill_A(n, m, W, kw_nums)
+    b = fill_b(n, m, B)
+    bounds = [(0, 1.0)] * (n * m)
+
+    # Need to expand this to match n*m size of c.
+    # Here we just expand the columns of W to match the `kw_nums` items.
+    c = np.array(expand_W(W, kw_nums)).flatten()
+
+    obj_value, values = max_lp_solver(c, A, b, bounds)
+    X = values
+    Q, revenue = post_process(X, B, W, n, r, m, kw_nums)
+    return Q, revenue
+
+
+def get_results(data_alias='ds0'):
+    """
+    This function makes it easy to get numbers of slides. This is a common function in all problem files.
+    Args:
+        data_alias:
+
+    Returns:
+        results: A dictionary with keys as query assignments `Q` and revenue `revenue`.
+    """
     data = create_data_vars('ds0')
     n = data['n']
     m = data['m']
     W = data['W']
     B = data['B']
+    kw_nums = data['kw_nums']
+    r = data['r']
+    Q, revenue = naive_lp_solver(B, W, n, r, m, kw_nums)
+    results = {
+        'Q': Q,
+        'revenue': revenue
+    }
+    return results
 
-    _ = test_naive_lp_solver(W, B, n, m)
+
+if __name__ == "__main__":
+    # When testing, substitute the variables n, m, W, B with appropriate values.
+    print(get_results('ds0')['revenue'])

@@ -1,7 +1,9 @@
 import os
-import numpy as np
-from configs import ROOT_DIR
 import pickle
+
+import numpy as np
+
+from configs import ROOT_DIR
 
 
 def expand_W(W, kw_nums):
@@ -38,13 +40,13 @@ def create_data_vars(data_alias='ds0'):
     m = len(kw_nums)
     r = len(W[0])
     print(f'W: {len(W), len(W[0])} | n: {n} | m: {m} | r: {r}')
-    W_expanded = expand_W(W, kw_nums)
+
     data = {
         'n': n,
         'm': m,
         'r': r,
         'B': B,
-        'W': W_expanded,
+        'W': W,
         'kw_nums': kw_nums
     }
     return data
