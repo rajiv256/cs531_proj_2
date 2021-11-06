@@ -1,11 +1,9 @@
-from scipy.optimize import linprog
 import numpy as np
-import math
+import pulp as pl
 
 import configs
-from pulp_utils import optimize_lp
-import pulp as pl
 from data_utils import create_data_vars
+from pulp_utils import optimize_lp
 
 
 def max_lp_solver(c, A_ub, b_ub, bounds):
@@ -24,20 +22,11 @@ def max_lp_solver(c, A_ub, b_ub, bounds):
      success: True
            x: array([ 9.99999989, -2.99999999])
     """
-    # model = pl.LpProblem("Example", pl.LpMaximize)
-    # solver_type='PULP_CBC_CMD'
-    # solver = pl.getSolver(solver_type)
-    # var_names = ['x_'+str(i) for i in range(len(c))]
-    # variables = [pl.LpVariable(name=var_names[i]) for i in range(len(var_names))]
-    # constraints = [create_constraint(A_ub[i], variables, sense=pl.LpConstraintLE, name='co_'+str(i), rhs=b_ub[i]) for i in range(len(A_ub))]
-    # for constraint in constraints:
-    #     model.addConstraint(constraint)
-    # obj = pl.lpDot(c, variables)
-    # model += obj
     solver = pl.getSolver(configs.SOLVER_TYPE)
     obj_value, values = optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=solver)
 
     print(obj_value, values)
+
 
 def fill_A(n, m, W):
     '''
