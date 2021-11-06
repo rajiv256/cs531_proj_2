@@ -17,6 +17,9 @@ def greedy(B, W, n, m):
     sortedW = []
     for i in range(n):
         for j in range(m):
+            # O weight means no bid.
+            if W[i][j] == 0:
+                continue
             sortedW.append([i, j, W[i][j]])
     sortedW.sort(key=lambda x: x[2], reverse=True)
     for w_ij in sortedW:

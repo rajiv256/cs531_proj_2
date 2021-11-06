@@ -22,6 +22,9 @@ def online_greedy_step(B, M, W, n, kw_num):
     optimal_ad_num = -1
     optimal_bid = 0
     for i in range(n):
+        # 0 means no bid.
+        if W[i][kw_num] == 0:
+            continue
         if W[i][kw_num] <= (B[i]-M[i]):
             if optimal_bid <= W[i][kw_num]:
                 optimal_bid = W[i][kw_num]

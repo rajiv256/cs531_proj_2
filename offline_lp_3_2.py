@@ -66,6 +66,9 @@ def naive_lp(X, W, B, n, m):
         ad_num = int(index/m)
         kw_num = index%m
         bid = W[ad_num][kw_num]
+        # 0 means there is no bid.
+        if bid == 0:
+            continue
         if Q[kw_num] == -1 and bid <= B[ad_num]:
             M[ad_num] += bid
             B[ad_num] -= bid

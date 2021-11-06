@@ -59,13 +59,16 @@ def fill_A(n, m, W):
 
     """
     A = np.zeros((n + m, n * m))
+
     # First m rows for the ∑_i x_ij <= 1 constraints.
     for i in range(m):
         A[i, i::m] = 1
+
     # Next n rows will have ∑_j w_ij*x_ij <= B_i for i in 1..n
     for i in range(n):
         for j in range(m):
             A[m + i, i * m + j] = W[i][j]
+
     # A has a total of m + n rows and m*n columns.
     return A
 
@@ -76,6 +79,7 @@ def fill_b(n, m, B):
     for i in range(n):
         b[m + i] = B[i]
     return b
+
 
 def online_greedy_step(B, M, W, n, kw_num):
     """
@@ -94,6 +98,9 @@ def online_greedy_step(B, M, W, n, kw_num):
     optimal_ad_num = -1
     optimal_bid = 0
     for i in range(n):
+        # 0 means no bid.
+        if W[i][kw_num] == 0:
+            continue
         if W[i][kw_num] <= (B[i]-M[i]):
             if optimal_bid <= W[i][kw_num]:
                 optimal_bid = W[i][kw_num]
@@ -127,7 +134,50 @@ def online_greedy(B, W, n, r, kw_nums):
         M[ad_num] += bid
         revenue += bid
         Q[t] = ad_num
-    return Q, revenue, M
+    return Q, revenue
+
+
+def online_weighted_greedy_step(B, M, W, n, kw_num):
+    optimal_ad_num = -1
+    optimal_bid = 0
+    for i in range(n):
+        # 0 means no bid.
+        if W[i][kw_num] == 0:
+            continue
+        if W[i][kw_num] <= (B[i] - M[i]):
+            if optimal_bid < discount(B[i], M[i]) * W[i][kw_num]:
+                optimal_bid = W[i][kw_num]
+                optimal_ad_num = i
+    return optimal_ad_num, optimal_bid
+
+
+def online_weighted_greedy(B, W, n, r, kw_nums):
+    """
+
+    Args:
+        B:
+        W:
+        n:
+        r:
+        kw_nums:
+
+    Returns:
+
+    """
+    M = [0] * n
+    revenue = 0
+    m = len(kw_nums)
+    Q = [-1] * m
+
+    for t in range(m):
+        kw_num = kw_nums[t]
+        ad_num, bid = online_weighted_greedy_step(B, M, W, n, kw_num)
+        if ad_num == -1:
+            continue
+        M[ad_num] += bid
+        revenue += bid
+        Q[t] = ad_num
+    return Q, revenue
 
 
 def online_dual_lp(B, W, n, m, eps):
