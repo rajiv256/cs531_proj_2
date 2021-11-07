@@ -24,7 +24,6 @@ def min_lp_solver(c, A_ub, b_ub, bounds):
     """
     solver = pl.getSolver(configs.SOLVER_TYPE)
     obj_value, values = optimize_lp(c, A_ub, b_ub, objective=pl.LpMinimize, solver=solver, bounds=bounds)
-    # res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=bounds)
     return obj_value, values
 
 
@@ -45,32 +44,6 @@ def get_adword_dual(c, A, b):
     A_new = -A.T
     b_new = -c
     return c_new, A_new, b_new
-
-
-# def fill_A(n, m, W):
-#     """
-#     Creates a co-efficient matrix for the constraints.
-#     Args:
-#         n:
-#         m:
-#         W:
-#
-#     Returns:
-#
-#     """
-#     A = np.zeros((n + m, n * m))
-#
-#     # First m rows for the ∑_i x_ij <= 1 constraints.
-#     for i in range(m):
-#         A[i, i::m] = 1
-#
-#     # Next n rows will have ∑_j w_ij*x_ij <= B_i for i in 1..n
-#     for i in range(n):
-#         for j in range(m):
-#             A[m + i, i * m + j] = W[i][j]
-#
-#     # A has a total of m + n rows and m*n columns.
-#     return A
 
 
 def fill_A(n, m, W, kw_nums):
@@ -158,18 +131,23 @@ def online_greedy(B, W, n, r, m, kw_nums):
 def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
     optimal_ad_num = -1
     optimal_bid = 0
+    disc_bid = 0
 
     for i in range(n):
         # 0 means no bid.
-        # print(f'i: {i} | kw_num: {kw_num}| discount: {discount(B[i], M[i])} | wij: {W[i][kw_num]} | bid: {discount(B[i], M[i])*W[i][kw_num]}')
         if W[i][kw_num]==0:
+            # print(f'ad: {i} | bid: 0 | skipping')
             continue
+        disc = (1 - alphas[i])
+        # print(f'alphas: {alphas}')
+        # print(f'ad: {i} | disc: {disc} | bid: {W[i][kw_num]} | val: {W[i][kw_num] * disc} | B[i]: {B[i]} | M[i]: {M[i]}')
         if W[i][kw_num] <= (B[i] - M[i]):
-
-            if optimal_bid < (1 - alphas[i]) * W[i][kw_num]:
+            if disc_bid <= disc * W[i][kw_num]:
+                disc_bid = disc * W[i][kw_num]
                 optimal_bid = W[i][kw_num]
                 optimal_ad_num = i
     # print(f'selected ad_num: {optimal_ad_num}')
+    # print('================STEP OVER=======================')
     return optimal_ad_num, optimal_bid
 
 
@@ -207,16 +185,15 @@ def online_dual_lp(B, W, n, r, m, kw_nums, eps):
     c = np.array(expand_W(W, kw_nums))[:, :eps_m].flatten()
     A = fill_A(n, eps_m, W, kw_nums[:eps_m])
     b = fill_b(n, eps_m, B)
-    print(f'eps_m: {eps_m}')
-    print(f'A: {len(A), len(A[0])} | c: {len(c)} | b: {len(b)}')
     c_du, A_du, b_du = get_adword_dual(c, A, b)
     c_du = np.concatenate([c_du[:eps_m], eps * c_du[eps_m:]], axis=0)
-    bounds = [(0, 1e9)] * (eps_m + n)
+    bounds = [(0, 1e9)] * eps_m + [(0, 1)] * n
 
     obj_value, values = min_lp_solver(c_du, A_du, b_du, bounds)
     alphas = values[eps_m:]
 
     for t in range(eps_m, m):
+        # print(f'iter: {t} | B: {B} | M: {M}')
         ad_num, bid = online_weighted_greedy_step(B, M, W, alphas, n,
             kw_nums[t])
         if ad_num==-1:

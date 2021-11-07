@@ -7,8 +7,9 @@ from src.online_weighted_greedy_4_2 import get_results as get_results_4_2
 if __name__=="__main__":
     fns = [get_results_3_1, get_results_3_2, get_results_4_1, get_results_4_2,
            get_results_4_3]
-    data_alias = 'ds0_mini'
+    data_alias = 'ds3'
     A = []
-    for fn in fns[3:4]:
-        print(fn(data_alias=data_alias))
+    for fn in fns:
+        A.append(fn(data_alias=data_alias)['revenue'])
+        print(fn(data_alias=data_alias)['Q'])
     print(A)
