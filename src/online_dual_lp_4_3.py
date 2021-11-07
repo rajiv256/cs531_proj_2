@@ -210,6 +210,7 @@ def online_dual_lp(B, W, n, r, m, kw_nums, eps):
     c = np.array(expand_W(W, kw_nums))[:, :eps_m].flatten()
     A = fill_A(n, eps_m, W, kw_nums[:eps_m])
     b = fill_b(n, eps_m, B)
+    print(f'eps_m: {eps_m}')
     print(f'A: {len(A), len(A[0])} | c: {len(c)} | b: {len(b)}')
     c_du, A_du, b_du = get_adword_dual(c, A, b)
     c_du = np.concatenate([c_du[:eps_m], eps * c_du[eps_m:]], axis=0)

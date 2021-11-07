@@ -125,7 +125,7 @@ def get_results(data_alias='ds0'):
     Returns:
         results: A dictionary with keys as query assignments `Q` and revenue `revenue`.
     """
-    data = create_data_vars('ds0')
+    data = create_data_vars(data_alias)
     n = data['n']
     m = data['m']
     W = data['W']
