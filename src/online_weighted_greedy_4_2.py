@@ -16,17 +16,17 @@ def online_weighted_greedy_step(B, M, W, n, kw_num):
         # 0 means no bid.
         # print(f'i: {i} | kw_num: {kw_num}| discount: {discount(B[i], M[i])} | wij: {W[i][kw_num]} | bid: {discount(B[i], M[i])*W[i][kw_num]}')
         if W[i][kw_num]==0:
-            print(f'ad: {i} | bid: 0 | skipping')
+            # print(f'ad: {i} | bid: 0 | skipping')
             continue
         if W[i][kw_num] <= (B[i] - M[i]):
             disc = discount(B[i], M[i])
-            print(f'ad: {i} | disc: {disc} | bid: {W[i][kw_num]} | val: {W[i][kw_num] * disc}')
+            # print(f'ad: {i} | disc: {disc} | bid: {W[i][kw_num]} | val: {W[i][kw_num] * disc}')
             if disc_bid < disc * W[i][kw_num]:
                 disc_bid = disc * W[i][kw_num]
                 optimal_bid = W[i][kw_num]
                 optimal_ad_num = i
-    print(f'selected ad_num: {optimal_ad_num}')
-    print('================STEP OVER=======================')
+    # print(f'selected ad_num: {optimal_ad_num}')
+    # print('================STEP OVER=======================')
     return optimal_ad_num, optimal_bid
 
 
