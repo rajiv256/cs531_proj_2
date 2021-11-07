@@ -1,6 +1,6 @@
 import numpy as np
 
-from data_utils import create_data_vars
+from src.data_utils import create_data_vars
 
 
 def discount(B_i, M_i):
@@ -9,19 +9,24 @@ def discount(B_i, M_i):
 
 def online_weighted_greedy_step(B, M, W, n, kw_num):
     optimal_ad_num = -1
+    disc_bid = 0
     optimal_bid = 0
 
     for i in range(n):
         # 0 means no bid.
         # print(f'i: {i} | kw_num: {kw_num}| discount: {discount(B[i], M[i])} | wij: {W[i][kw_num]} | bid: {discount(B[i], M[i])*W[i][kw_num]}')
-        if W[i][kw_num] == 0:
+        if W[i][kw_num]==0:
+            print(f'ad: {i} | bid: 0 | skipping')
             continue
         if W[i][kw_num] <= (B[i] - M[i]):
-
-            if optimal_bid < discount(B[i], M[i]) * W[i][kw_num]:
+            disc = discount(B[i], M[i])
+            print(f'ad: {i} | disc: {disc} | bid: {W[i][kw_num]} | val: {W[i][kw_num] * disc}')
+            if disc_bid < disc * W[i][kw_num]:
+                disc_bid = disc * W[i][kw_num]
                 optimal_bid = W[i][kw_num]
                 optimal_ad_num = i
-    # print(f'selected ad_num: {optimal_ad_num}')
+    print(f'selected ad_num: {optimal_ad_num}')
+    print('================STEP OVER=======================')
     return optimal_ad_num, optimal_bid
 
 
@@ -43,6 +48,7 @@ def online_weighted_greedy(B, W, n, r, m, kw_nums):
     Q = [-1] * m
 
     for t in range(m):
+        print(f'iter: {t} | B: {B} | M: {M}')
         kw_num = kw_nums[t]
         ad_num, bid = online_weighted_greedy_step(B, M, W, n, kw_num)
         if ad_num == -1:

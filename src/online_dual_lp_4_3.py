@@ -3,12 +3,13 @@ In this sub-section, the objective function would be the total revenue. Which is
 Here, j is the query number. However, we only have bid_ij to be based on keywords and not queries. Therefore, we might
 need to expand the W matrix to duplicate the queries.
 """
-import math
 
 import numpy as np
-from scipy.optimize import linprog
+import pulp as pl
 
-from data_utils import create_data_vars
+import configs
+from src.data_utils import create_data_vars
+from src.pulp_utils import optimize_lp
 
 
 def min_lp_solver(c, A_ub, b_ub, bounds):
@@ -19,17 +20,12 @@ def min_lp_solver(c, A_ub, b_ub, bounds):
         c: Co-efficients for each variable.
         bounds: (min, max) bounds of each of the x_i. Set default to (0, 1.0)
     Returns:
-         con: array([], dtype=float64)
-         fun: -21.999999840824927
-     message: 'Optimization terminated successfully.'
-         nit: 6
-       slack: array([3.89999997e+01, 8.46872599e-08])
-      status: 0
-     success: True
-           x: array([ 9.99999989, -2.99999999])
+
     """
-    res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=bounds)
-    return res
+    solver = pl.getSolver(configs.SOLVER_TYPE)
+    obj_value, values = optimize_lp(c, A_ub, b_ub, objective=pl.LpMinimize, solver=solver, bounds=bounds)
+    # res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=bounds)
+    return obj_value, values
 
 
 def get_adword_dual(c, A, b):
@@ -95,6 +91,7 @@ def fill_A(n, m, W, kw_nums):
     # A has a total of m + n rows and m*n columns.
     return A
 
+
 def fill_b(n, m, B):
     b = np.zeros((m + n, 1))
     b[:m] = 1
@@ -121,9 +118,9 @@ def online_greedy_step(B, M, W, n, kw_num):
     optimal_bid = 0
     for i in range(n):
         # 0 means no bid.
-        if W[i][kw_num] == 0:
+        if W[i][kw_num]==0:
             continue
-        if W[i][kw_num] <= (B[i]-M[i]):
+        if W[i][kw_num] <= (B[i] - M[i]):
             if optimal_bid <= W[i][kw_num]:
                 optimal_bid = W[i][kw_num]
                 optimal_ad_num = i
@@ -145,12 +142,12 @@ def online_greedy(B, W, n, r, m, kw_nums):
     """
     M = [0] * n
     revenue = 0
-    Q = [-1]*m
+    Q = [-1] * m
 
     for t in range(len(kw_nums)):
         kw_num = kw_nums[t]
         ad_num, bid = online_greedy_step(B, M, W, n, kw_num)
-        if ad_num == -1:
+        if ad_num==-1:
             continue
         M[ad_num] += bid
         revenue += bid
@@ -165,7 +162,7 @@ def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
     for i in range(n):
         # 0 means no bid.
         # print(f'i: {i} | kw_num: {kw_num}| discount: {discount(B[i], M[i])} | wij: {W[i][kw_num]} | bid: {discount(B[i], M[i])*W[i][kw_num]}')
-        if W[i][kw_num] == 0:
+        if W[i][kw_num]==0:
             continue
         if W[i][kw_num] <= (B[i] - M[i]):
 
@@ -214,14 +211,15 @@ def online_dual_lp(B, W, n, r, m, kw_nums, eps):
     print(f'A: {len(A), len(A[0])} | c: {len(c)} | b: {len(b)}')
     c_du, A_du, b_du = get_adword_dual(c, A, b)
     c_du = np.concatenate([c_du[:eps_m], eps * c_du[eps_m:]], axis=0)
-    bounds = [(0, math.inf)] * (eps_m + n)
+    bounds = [(0, 1e9)] * (eps_m + n)
 
-    res = min_lp_solver(c_du, A_du, b_du, bounds)
-    alphas = res['x'][eps_m:]
+    obj_value, values = min_lp_solver(c_du, A_du, b_du, bounds)
+    alphas = values[eps_m:]
 
     for t in range(eps_m, m):
-        ad_num, bid = online_weighted_greedy_step(B, M, W, alphas, n, kw_nums[t])
-        if ad_num == -1:
+        ad_num, bid = online_weighted_greedy_step(B, M, W, alphas, n,
+            kw_nums[t])
+        if ad_num==-1:
             Q.append(ad_num)
             continue
         M[ad_num] += bid
@@ -255,9 +253,7 @@ def get_results(data_alias='ds0'):
     return results
 
 
-
-
-if __name__ == "__main__":
+if __name__=="__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
     # do something
     print(get_results('ds1')['revenue'])

@@ -1,4 +1,4 @@
-from data_utils import create_data_vars
+from src.data_utils import create_data_vars
 
 
 # In the online setting, "m" value is not known. We do know "r" which is the no. of unique key words.
@@ -68,6 +68,7 @@ def get_results(data_alias='ds0'):
         results: A dictionary with keys as query assignments `Q` and revenue `revenue`.
     """
     data = create_data_vars(data_alias)
+    print(data)
     n = data['n']
     m = data['m']
     W = data['W']

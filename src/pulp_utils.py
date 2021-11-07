@@ -35,7 +35,7 @@ def create_variable(name, lower_bound=-math.inf, upper_bound=math.inf):
     return var
 
 
-def optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=None):
+def optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=None, bounds=[]):
     """
     optimizes the LP based on the LP objective.
     Args:
@@ -50,17 +50,21 @@ def optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=None):
 
     """
     model = pl.LpProblem("OptimizeModel", objective)
-
     var_names = ['x_' + str(i) for i in range(len(c))]
-    variables = [pl.LpVariable(name=var_names[i], lowBound=0, upBound=1.0) for i in range(len(var_names))]
-    constraints = [create_constraint(A_ub[i], variables, sense=pl.LpConstraintLE, name='co_' + str(i), rhs=b_ub[i]) for
+    print(len(bounds), len(var_names))
+    variables = [
+        pl.LpVariable(name=var_names[i], lowBound=bounds[i][0], upBound=
+        bounds[i][1]) for i in range(len(var_names))]
+    constraints = [create_constraint(
+        A_ub[i], variables, sense=pl.LpConstraintLE, name='co_' + str(i), rhs=
+        b_ub[i]) for
                    i in range(len(A_ub))]
     for constraint in constraints:
         model.addConstraint(constraint)
     obj = pl.lpDot(c, variables)
     model += obj
     status = model.solve(solver)
-    assert status == pl.LpStatusOptimal, "LP not optimized!!"
+    assert status==pl.LpStatusOptimal, "LP not optimized!!"
     values = [pl.value(variable) for variable in variables]
     obj_value = pl.value(obj)
     return obj_value, values

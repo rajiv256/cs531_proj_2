@@ -1,4 +1,4 @@
-from data_utils import create_data_vars
+from src.data_utils import create_data_vars
 
 
 def greedy(B, W, n, r, m, kw_nums):

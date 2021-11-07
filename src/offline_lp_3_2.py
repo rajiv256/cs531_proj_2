@@ -2,8 +2,8 @@ import numpy as np
 import pulp as pl
 
 import configs
-from data_utils import create_data_vars
-from pulp_utils import optimize_lp
+from src.data_utils import create_data_vars
+from src.pulp_utils import optimize_lp
 
 
 def max_lp_solver(c, A_ub, b_ub, bounds):
@@ -23,7 +23,7 @@ def max_lp_solver(c, A_ub, b_ub, bounds):
            x: array([ 9.99999989, -2.99999999])
     """
     solver = pl.getSolver(configs.SOLVER_TYPE)
-    obj_value, values = optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=solver)
+    obj_value, values = optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=solver, bounds=bounds)
 
     print(obj_value, values)
     return obj_value, values
