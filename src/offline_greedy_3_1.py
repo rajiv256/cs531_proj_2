@@ -1,4 +1,4 @@
-from data_utils import create_data_vars
+from src.data_utils import create_data_vars
 
 
 def greedy(B, W, n, r, m, kw_nums):
@@ -44,7 +44,7 @@ def get_results(data_alias='ds0'):
     Returns:
         results: A dictionary with keys as query assignments `Q` and revenue `revenue`.
     """
-    data = create_data_vars('ds0')
+    data = create_data_vars(data_alias)
     n = data['n']
     m = data['m']
     W = data['W']
@@ -60,4 +60,4 @@ def get_results(data_alias='ds0'):
 
 
 if __name__== "__main__":
-    print(get_results('ds[0]')['revenue'])
+    print(get_results('ds0')['revenue'])
