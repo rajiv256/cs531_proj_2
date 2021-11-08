@@ -131,7 +131,7 @@ def online_greedy(B, W, n, r, m, kw_nums):
 def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
     optimal_ad_num = -1
     optimal_bid = 0
-    disc_bid = 0
+    disc_bid = -1
 
     for i in range(n):
         # 0 means no bid.
@@ -142,7 +142,7 @@ def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
         # print(f'alphas: {alphas}')
         # print(f'ad: {i} | disc: {disc} | bid: {W[i][kw_num]} | val: {W[i][kw_num] * disc} | B[i]: {B[i]} | M[i]: {M[i]}')
         if W[i][kw_num] <= (B[i] - M[i]):
-            if disc_bid <= disc * W[i][kw_num]:
+            if disc_bid < disc * W[i][kw_num]:
                 disc_bid = disc * W[i][kw_num]
                 optimal_bid = W[i][kw_num]
                 optimal_ad_num = i
