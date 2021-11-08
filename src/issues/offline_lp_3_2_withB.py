@@ -52,7 +52,7 @@ def fill_b(n, m, B):
     b = np.zeros((m + n, 1))
     b[:m] = 1
     for i in range(n):
-        b[m+i] = B[i]
+        b[m + i] = B[i]
     return b
 
 
@@ -67,8 +67,8 @@ def post_process(X, B, W, n, r, m, kw_nums):
         revenue: Total revenue
     '''
     revenue = 0.0
-    M = [0.0]*n
-    Q = [-1]*m
+    M = [0.0] * n
+    Q = [-1] * m
     sortedX = [(index, x) for index, x in enumerate(X)]
     sortedX.sort(key=lambda x: x[1], reverse=True)
     for index, prob in sortedX:
@@ -77,9 +77,9 @@ def post_process(X, B, W, n, r, m, kw_nums):
         kw_num = kw_nums[q_num]
         bid = W[ad_num][kw_num]
         # 0 means there is no bid.
-        if bid == 0:
+        if bid==0:
             continue
-        if Q[q_num] == -1 and bid <= B[ad_num]:
+        if Q[q_num]==-1 and bid <= B[ad_num]:
             M[ad_num] += bid
             B[ad_num] -= bid
             Q[q_num] = ad_num
@@ -109,6 +109,13 @@ def naive_lp_solver(B, W, n, r, m, kw_nums):
     # Need to expand this to match n*m size of c.
     # Here we just expand the columns of W to match the `kw_nums` items.
     c = np.array(expand_W(W, kw_nums)).flatten()
+
+    # Explicitly setting impossible bids to zero.
+    for index in range(len(c)):
+        ad_num = int(index / m)
+        q_num = int(index % m)
+        if c[index] > B[ad_num]:
+            c[index] = 0
 
     obj_value, values = max_lp_solver(c, A, b, bounds)
     X = values
@@ -140,6 +147,6 @@ def get_results(data_alias='ds0'):
     return results
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    print(get_results('ds3')['revenue'])
+    print(get_results('ds0')['revenue'])
