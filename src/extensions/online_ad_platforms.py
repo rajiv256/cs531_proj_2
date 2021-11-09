@@ -70,9 +70,7 @@ def fill_A(n, m, W, kw_nums):
         for j in range(m):
             kw_num = kw_nums[j]
             for s in range(SLOTS):
-                A[m + i, i * m * SLOTS + j * SLOTS + s] = (
-                                                                      DISCOUNT_FACTOR ** s) * \
-                                                          W[i][kw_num]
+                A[m + i, i * m * SLOTS + j * SLOTS + s] = (DISCOUNT_FACTOR ** s) * W[i][kw_num]
 
     # A has a total of m + n rows and m*n*SLOTS columns.
     return A
@@ -157,18 +155,14 @@ def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
             # 0 means no bid.
             if W[i][kw_num]==0:
                 continue
+
             disc = (1 - alphas[i])
-            # print(f'alphas: {alphas}')
-            # print(f'ad: {i} | disc: {disc} | bid: {W[i][kw_num]} | val: {W[i][kw_num] * disc} | B[i]: {B[i]} | M[i]: {M[i]}')
             slot_discounted_bid = slot_discount * W[i][kw_num]
             if slot_discounted_bid <= (B[i] - M[i]):
-                if disc_bids[slot] < disc * W[i][
-                    kw_num]:  # TODO(rajiv): This is correct. It could just be off by a constant factor.
+                if disc_bids[slot] < disc * W[i][kw_num]:  # TODO(rajiv): This is correct. It could just be off by a constant factor.
                     disc_bids[slot] = disc * W[i][kw_num]
                     optimal_bids[slot] = slot_discounted_bid
                     optimal_ad_nums[slot] = i
-    # print(f'selected ad_num: {optimal_ad_num}')
-    # print('================STEP OVER=======================')
     return optimal_ad_nums, optimal_bids
 
 
