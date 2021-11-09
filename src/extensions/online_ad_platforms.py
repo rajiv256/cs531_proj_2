@@ -1,6 +1,8 @@
 """In this instantiation of the online AdWords problem, the #variables becomes
 n*m*(#slots)*
 """
+import random
+
 import numpy as np
 import pulp as pl
 
@@ -11,6 +13,7 @@ from src.pulp_utils import optimize_lp
 
 SLOTS = 3
 DISCOUNT_FACTOR = 0.5
+
 
 
 def min_lp_solver(c, A_ub, b_ub, bounds):
@@ -169,7 +172,7 @@ def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
     return optimal_ad_nums, optimal_bids
 
 
-def expand_W_withslots(W, kw_nums):
+def expand_W_with_slots_kwprobs(W, kw_nums, kw_probs):
     """First executes np.take to get the n*r to n*m.
     Then expands the final dim to accommodate for the slot values.
     Args:
@@ -179,7 +182,8 @@ def expand_W_withslots(W, kw_nums):
     Returns:
 
     """
-    W_new = np.take(W, indices=kw_nums, axis=1)
+    W_kwprobs = np.multiply(W, kw_probs)
+    W_new = np.take(W_kwprobs, indices=kw_nums, axis=1)
     W_slots = np.expand_dims(W_new, axis=2)  # n*m*1
     W_slots = np.repeat(W_slots, repeats=SLOTS, axis=2)  # n*m*SLOTS
     discounting = [(DISCOUNT_FACTOR ** s) for s in range(SLOTS)]
@@ -187,7 +191,7 @@ def expand_W_withslots(W, kw_nums):
     return W_slots
 
 
-def online_dual_lp(B, W, n, r, m, kw_nums, eps):
+def online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps):
     """
 
     Args:
@@ -204,7 +208,8 @@ def online_dual_lp(B, W, n, r, m, kw_nums, eps):
     """
     eps_m = int(eps * m)
     M, Q, revenue = online_greedy(B, W, n, r, eps_m, kw_nums[:eps_m])
-    c = np.array(expand_W_withslots(W, kw_nums))[:, :eps_m, :].flatten()
+    c = np.array(expand_W_with_slots_kwprobs(W, kw_nums, kw_probs))[:, :eps_m,
+        :].flatten()
     A = fill_A(n, eps_m, W, kw_nums[:eps_m])
     b = fill_b(n, eps_m, B)
     print(A)
@@ -252,7 +257,8 @@ def get_results(data_alias='ds0'):
     B = data['B']
     kw_nums = data['kw_nums']
     r = data['r']
-    Q, revenue = online_dual_lp(B, W, n, r, m, kw_nums, eps=0.1)
+    kw_probs = [random.random() for i in range(r)]
+    Q, revenue = online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps=0.1)
     results = {
         'Q': Q,
         'revenue': revenue
@@ -263,7 +269,7 @@ def get_results(data_alias='ds0'):
 if __name__=="__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
     # do something
-    print(get_results('ds2')['revenue'])
+    print(get_results('ds1')['revenue'])
     # B = [20, 20]
     # W = [[1, 1, 1],
     #      [2, 2, 2],
