@@ -2,6 +2,7 @@ import numpy as np
 import pulp as pl
 from tqdm import tqdm
 
+import configs
 from src.data_utils import create_data_vars
 from src.pulp_utils import optimize_lp
 
@@ -22,7 +23,7 @@ def max_lp_solver(c, A_ub, b_ub, bounds):
      success: True
            x: array([ 9.99999989, -2.99999999])
     """
-    solver = pl.getSolver('PULP_CHOCO_CMD')
+    solver = pl.getSolver(configs.SOLVER_TYPE)
     obj_value, values = optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=solver, bounds=bounds)
 
     print(obj_value, values)
