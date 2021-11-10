@@ -1,6 +1,7 @@
 import math
 
 import pulp as pl
+from tqdm import tqdm
 
 
 def create_affine_expression(coeffs, variables):
@@ -55,17 +56,29 @@ def optimize_lp(c, A_ub, b_ub, objective=pl.LpMaximize, solver=None, bounds=[]):
     variables = [
         pl.LpVariable(name=var_names[i], lowBound=bounds[i][0], upBound=
         bounds[i][1]) for i in range(len(var_names))]
-    constraints = [create_constraint(
-        A_ub[i], variables, sense=pl.LpConstraintLE, name='co_' + str(i), rhs=
-        b_ub[i]) for
-                   i in range(len(A_ub))]
-    for constraint in constraints:
-        model.addConstraint(constraint)
+    # constraints = [create_constraint(A_ub[i], variables, sense=pl.LpConstraintLE, name='co_' + str(i), rhs=b_ub[i]) for i in range(len(A_ub))]
+    # for constraint in constraints:
+    #     model.addConstraint(constraint)
+    # constraints = []
+    # xs = []
+    # for i in tqdm(range(len(A_ub))):
+    #     xs.append((A_ub[i], variables, i, b_ub[i]))
+    # with ThreadPoolExecutor() as executor:
+    #     for constraint in tqdm(executor.map(lambda x: create_constraint(x[0], x[1], sense=pl.LpConstraintLE, name='cos_'+str(x[2]), rhs=x[3]), xs)):
+    #         constraints.append(constraint)
+    # for constraint in tqdm(constraints):
+    #     model.addConstraint(constraint)
+    for i in tqdm(range(len(A_ub))):
+        affine = pl.LpAffineExpression([(variables[j], A_ub[i][j]) for j in range(len(variables)) if A_ub[i][j]!=0.0])
+        model += affine <= b_ub[i]
+
     obj = pl.lpDot(c, variables)
     model += obj
+    print('Objective added.')
     status = model.solve(solver)
     assert status==pl.LpStatusOptimal, "LP not optimized!!"
     values = [pl.value(variable) for variable in variables]
     obj_value = pl.value(obj)
+    print('Solved.')
     return obj_value, values
 
