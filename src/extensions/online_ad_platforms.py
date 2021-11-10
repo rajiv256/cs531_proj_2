@@ -15,7 +15,6 @@ SLOTS = 3
 DISCOUNT_FACTOR = 0.5
 
 
-
 def min_lp_solver(c, A_ub, b_ub, bounds):
     """
     Args:
@@ -51,11 +50,12 @@ def get_adword_dual(c, A, b):
 
 
 def fill_A(n, m, W, kw_nums):
-    '''
+    """
     Args:
         n: #advertisers
         m: #keywords
-    '''
+        kw_nums: number of the keyword coming to the queries.
+    """
     A = np.zeros([m + n, m * n * SLOTS])
 
     # First m rows for the ∑_i ∑_s x_ijs <= 1 constraints
@@ -131,9 +131,12 @@ def online_greedy(B, W, n, r, m, kw_nums):
     M = [0] * n
     revenue = 0
     Q = [[-1] * SLOTS] * m
-
+    freqs = [0]*r
     for t in range(len(kw_nums)):
         kw_num = kw_nums[t]
+
+        # Maintaining the keyword frequency.
+        freqs[kw_num] += 1
         ad_nums, bids = online_greedy_step(B, M, W, n, kw_num)
         for slot, (slot_ad_num, slot_bid) in enumerate(zip(ad_nums, bids)):
             if slot_ad_num==-1:
@@ -141,7 +144,7 @@ def online_greedy(B, W, n, r, m, kw_nums):
             M[slot_ad_num] += slot_bid
             revenue += slot_bid
             Q[t][slot] = slot_ad_num
-    return M, Q, revenue
+    return M, Q, revenue, freqs
 
 
 def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
@@ -201,31 +204,21 @@ def online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps):
 
     """
     eps_m = int(eps * m)
-    M, Q, revenue = online_greedy(B, W, n, r, eps_m, kw_nums[:eps_m])
-    c = np.array(expand_W_with_slots_kwprobs(W, kw_nums, kw_probs))[:, :eps_m,
-        :].flatten()
+    M, Q, revenue, freqs = online_greedy(B, W, n, r, eps_m, kw_nums[:eps_m])
+    c = np.array(expand_W_with_slots_kwprobs(W, kw_nums, kw_probs))[:, :eps_m, :].flatten()
     A = fill_A(n, eps_m, W, kw_nums[:eps_m])
     b = fill_b(n, eps_m, B)
-    print(A)
-    print(
-        f'c: {c.shape} | A: {A.shape} | b: {b.shape}'
-    )
     c_du, A_du, b_du = get_adword_dual(c, A, b)
-    print(
-        f'c_du: {c_du.shape} | A_du: {A_du.shape} | b_du: {b_du.shape}'
-    )
     c_du = np.concatenate([c_du[:eps_m], eps * c_du[eps_m:]], axis=0)
     bounds = [(0, 1e9)] * eps_m + [(0, 1)] * n
     obj_value, values = min_lp_solver(c_du, A_du, b_du, bounds)
     alphas = values[eps_m:]
 
     for t in range(eps_m, m):
-        # print(f'iter: {t} | B: {B} | M: {M}')
         Q.append([])
-        ad_nums, bids = online_weighted_greedy_step(B, M, W, alphas, n,
-            kw_nums[t])
+        ad_nums, bids = online_weighted_greedy_step(B, M, W, alphas, n, kw_nums[t])
         for slot, (ad_num, bid) in enumerate(zip(ad_nums, bids)):
-            if ad_num==-1:
+            if ad_num == -1:
                 Q[t].append(ad_num)
                 continue
             M[ad_num] += bid
@@ -272,3 +265,4 @@ if __name__=="__main__":
     # kw_nums = [0, 1, 2]
     # A = fill_A(len(B), len(kw_nums), W, kw_nums)
     # print(A)
+
