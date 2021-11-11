@@ -14,7 +14,7 @@ Navigate to the root folder of the project and run
 
 Then set your `PYTHONPATH` variable as follows. Go to the project root
 from your terminal and run the following command.
->export PYTHONPATH=`pwd`
+> export PYTHONPATH=`pwd`
 
 You should be able to run any file now using the command
 >python3 src/<filename>.py
