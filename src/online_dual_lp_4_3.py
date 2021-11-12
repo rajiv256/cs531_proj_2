@@ -133,16 +133,15 @@ def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
     optimal_bid = 0
     disc_bid = -1
 
+    if np.sum(alphas) == n:
+        optimal_ad_num, optimal_bid = online_greedy_step(B, M, W, n, kw_num)
+        return optimal_ad_num, optimal_bid
+
     for i in range(n):
         # 0 means no bid.
         if W[i][kw_num]==0:
             continue
         disc = (1 - alphas[i])
-
-        # Tie breaking incase of the weighted bid = 0
-        if disc == 0:
-            optimal_ad_num, optimal_bid = online_greedy_step(B, M, W, n, kw_num)
-            return optimal_ad_num, optimal_bid
 
         # print(f'alphas: {alphas}')
         # print(f'ad: {i} | disc: {disc} | bid: {W[i][kw_num]} | val: {W[i][kw_num] * disc} | B[i]: {B[i]} | M[i]: {M[i]}')
