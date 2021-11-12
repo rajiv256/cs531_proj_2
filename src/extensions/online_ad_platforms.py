@@ -1,6 +1,7 @@
 """In this instantiation of the online AdWords problem, the #variables becomes
 n*m*(#slots)*
 """
+import random
 
 import numpy as np
 import pulp as pl
@@ -12,6 +13,7 @@ from src.pulp_utils import optimize_lp
 
 SLOTS = 3
 DISCOUNT_FACTOR = 0.1
+
 
 
 def min_lp_solver(c, A_ub, b_ub, bounds):
@@ -150,7 +152,7 @@ def online_greedy(B, W, n, r, m, kw_nums):
         freqs[kw_num] += 1
         ad_nums, bids = online_greedy_step(B, M, W, n, kw_num)
         for slot, (slot_ad_num, slot_bid) in enumerate(zip(ad_nums, bids)):
-            if slot_ad_num==-1:
+            if slot_ad_num == -1:
                 continue
             M[slot_ad_num] += slot_bid
             revenue += slot_bid
@@ -158,20 +160,17 @@ def online_greedy(B, W, n, r, m, kw_nums):
     return M, Q, revenue, freqs
 
 
-def online_weighted_greedy_step_with_dynamic_slots(B, M, W, alphas, n, kw_num, freqs_norm):
+def online_weighted_greedy_step_with_dynamic_slots(B, M, W, alphas, n, kw_num,  kw_slots):
 
     # TODO(rajiv): Check the validity again.
 
-    slots = SLOTS + int(freqs_norm[kw_num]*SLOTS)
-
-
+    slots = kw_slots[kw_num]
     optimal_ad_nums = [-1] * slots
     optimal_bids = [0] * slots
     disc_bids = [-1] * slots
     for slot in range(slots):
-        slot_discount = (1 - DISCOUNT_FACTOR*slot)
+        slot_discount = max(0.1, (1 - DISCOUNT_FACTOR*slot))
         for i in range(n):
-
             # 0 means no bid.
             if W[i][kw_num] == 0:
                 continue
@@ -228,6 +227,16 @@ def expand_W_with_slots_kwprobs(W, kw_nums, kw_probs):
     return W_slots
 
 
+def redistribute_slots(kw_probs, total_slots):
+    softmax_probs = np.exp(kw_probs)/np.sum(np.exp(kw_probs))
+    softmax_probs = softmax_probs.tolist()
+    slots = [int(total_slots*prob) for prob in softmax_probs]
+    rem_slots = total_slots - sum(slots)
+    for i in range(rem_slots):
+        slots[i] += 1
+    return slots
+
+
 def online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps):
     """
 
@@ -257,11 +266,12 @@ def online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps):
     obj_value, values = min_lp_solver(c_du, A_du, b_du, bounds)
     alphas = values[eps_m:]
 
+    slots = redistribute_slots(kw_probs, SLOTS*m)
+    print(f'sum slots: {sum(slots)}')
     for t in range(eps_m, m):
         Q.append([])
-        ad_nums, bids = online_weighted_greedy_step_with_dynamic_slots(B, M, W, alphas, n, kw_nums[t], freqs_norm)
+        ad_nums, bids = online_weighted_greedy_step_with_dynamic_slots(B, M, W, alphas, n, kw_nums[t], slots)
         # ad_nums, bids = online_weighted_greedy_step(B, M, W, alphas, n, kw_nums[t])
-
         for slot, (ad_num, bid) in enumerate(zip(ad_nums, bids)):
             if ad_num == -1:
                 Q[t].append(ad_num)
@@ -269,6 +279,7 @@ def online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps):
             M[ad_num] += bid
             revenue += bid
             Q[t].append(ad_num)
+        print(f't: {t} | revenue: {revenue}')
     msum = sum(M)
     return Q, msum  # revenue also gives the same answer
 
@@ -290,15 +301,7 @@ def get_results(data_alias='ds0'):
     kw_nums = data['kw_nums']
     r = data['r']
 
-    #TODO(rajiv) Draw kw_nums from a gaussian
-    mu = r // 2
-    sigma = r // 8
-    kw_nums = np.random.standard_normal(size=m) * sigma + mu
-    kw_nums = [int(kw_num) for kw_num in kw_nums]
-    kw_nums = [max(0, min(r-1, item)) for item in kw_nums]
-    print(kw_nums)
-
-    kw_probs = [0.2 for i in range(r)]
+    kw_probs = [random.random() for i in range(r)]
     Q, revenue = online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps=0.1)
     results = {
         'Q': Q,

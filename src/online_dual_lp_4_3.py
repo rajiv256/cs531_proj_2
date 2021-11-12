@@ -94,7 +94,7 @@ def online_greedy_step(B, M, W, n, kw_num):
         if W[i][kw_num]==0:
             continue
         if W[i][kw_num] <= (B[i] - M[i]):
-            if optimal_bid <= W[i][kw_num]:
+            if optimal_bid < W[i][kw_num]:
                 optimal_bid = W[i][kw_num]
                 optimal_ad_num = i
     return optimal_ad_num, optimal_bid
@@ -182,21 +182,21 @@ def online_dual_lp(B, W, n, r, m, kw_nums, eps):
     """
     eps_m = int(eps * m)
     M, Q, revenue = online_greedy(B, W, n, r, eps_m, kw_nums[:eps_m])
-    c = np.array(expand_W(W, kw_nums))[:, :eps_m].flatten()
-    A = fill_A(n, eps_m, W, kw_nums[:eps_m])
-    b = fill_b(n, eps_m, B)
+    c = np.array(expand_W(W, kw_nums))[:, :eps_m].flatten()  # (n*eps_m,)
+    A = fill_A(n, eps_m, W, kw_nums[:eps_m])  # (eps_m + n, eps_m*n)
+    b = fill_b(n, eps_m, B)  # (eps_m + n)
     c_du, A_du, b_du = get_adword_dual(c, A, b)
     c_du = np.concatenate([c_du[:eps_m], eps * c_du[eps_m:]], axis=0)
-    bounds = [(0, 1e9)] * eps_m + [(0, 1)] * n
+    bounds = [(0, 1e20)] * eps_m + [(0, 1.0)] * n
 
     obj_value, values = min_lp_solver(c_du, A_du, b_du, bounds)
+    print(f'betas: {eps_m} | alphas: {n} | {values}')
     alphas = values[eps_m:]
 
     for t in range(eps_m, m):
         # print(f'iter: {t} | B: {B} | M: {M}')
-        ad_num, bid = online_weighted_greedy_step(B, M, W, alphas, n,
-            kw_nums[t])
-        if ad_num==-1:
+        ad_num, bid = online_weighted_greedy_step(B, M, W, alphas, n, kw_nums[t])
+        if ad_num == -1:
             Q.append(ad_num)
             continue
         M[ad_num] += bid
@@ -230,7 +230,49 @@ def get_results(data_alias='ds0'):
     return results
 
 
+def test():
+    B = [90]
+    kw_nums = [0, 1, 2]
+    W = [[70, 40, 40]]
+    n = len(B)
+    m = len(kw_nums)
+    r = len(kw_nums)
+    Q, revenue = online_dual_lp(B, W, n, r, m, kw_nums, eps=0.1)
+    return Q, revenue
+
 if __name__=="__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
     # do something
-    print(get_results('ds1')['revenue'])
+    print(get_results('ds0')['revenue'])
+    # Q, revenue = test()
+    # # print(revenue)
+    """
+    P = max(2x1 + 3x2)
+    s.t. 4x1 + 8x2 ≤ 12
+    2x1 + x2 ≤ 3
+    3x1 + 2x2 ≤ 4
+    x1, x2 ≥ 0
+    """
+    # c = np.array([2, 3])
+    # A = np.array([[4, 8], [2, 1], [3, 2]])
+    # b = np.array([12, 3, 4])
+    # bounds = [(0, None)] * 2
+    # c_du, A_du, b_du = get_adword_dual(c, A, b)
+    # # print(c_du)
+    # # print(A_du)
+    # # print(b_du)
+
+"""
+4y1 + 2y2 + 3y2 ≥ 2
+8y1 + y2 + 2y3 ≥ 3
+y1, y2, y3 ≥ 0
+and we seek min(12y1 + 3y2 + 4y3)
+"""
+
+# n = 2
+# m = 3
+# W = [[1, 2, 3],
+#      [4, 5, 6]]
+# kw_nums = [0, 1, 2]
+# A = fill_A(n, m, W, kw_nums)
+# # print(A)
