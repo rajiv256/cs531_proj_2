@@ -3,7 +3,6 @@ Utils to manipulate the data. This is not source code. Refer to the src/ for the
 """
 import os
 import pickle
-from pprint import pprint
 
 from configs import ROOT_DIR
 
@@ -11,7 +10,7 @@ from configs import ROOT_DIR
 def test_0(pklFilePath):
     obj = pickle.load(open(pklFilePath, 'rb'))
     B, W, kw_nums = obj
-    pprint(W)
+    print(W)
 
 
 if __name__ == "__main__":

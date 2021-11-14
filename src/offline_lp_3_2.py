@@ -162,3 +162,6 @@ x1, x2 ≥ 0
     # obj, values = max_lp_solver(c, A, b, bounds)
     # print(obj)
 
+    Q, revenue = get_results('ds3')
+    print(revenue)
+

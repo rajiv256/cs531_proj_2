@@ -39,7 +39,7 @@ def create_data_vars(data_alias='ds0'):
     n = len(B)
     m = len(kw_nums)
     r = len(W[0])
-    print(f'W: {len(W), len(W[0])} | n: {n} | m: {m} | r: {r}')
+    # print(f'W: {len(W), len(W[0])} | n: {n} | m: {m} | r: {r}')
 
     data = {
         'n': n,
