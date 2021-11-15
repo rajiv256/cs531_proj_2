@@ -120,7 +120,7 @@ def online_greedy(B, W, n, r, m, kw_nums):
     for t in range(len(kw_nums)):
         kw_num = kw_nums[t]
         ad_num, bid = online_greedy_step(B, M, W, n, kw_num)
-        if ad_num == -1:
+        if ad_num==-1:
             continue
         M[ad_num] += bid
         revenue += bid
@@ -133,7 +133,7 @@ def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
     optimal_bid = 0
     disc_bid = -1
 
-    if np.sum(alphas) == n:
+    if np.sum(alphas)==n:
         optimal_ad_num, optimal_bid = online_greedy_step(B, M, W, n, kw_num)
         return optimal_ad_num, optimal_bid
 
@@ -198,9 +198,10 @@ def online_dual_lp(B, W, n, r, m, kw_nums, eps):
     alphas = values[eps_m:]
 
     for t in range(eps_m, m):
-        ad_num, bid = online_weighted_greedy_step(B, M, W, alphas, n, kw_nums[t])
+        ad_num, bid = online_weighted_greedy_step(B, M, W, alphas, n,
+            kw_nums[t])
 
-        if ad_num == -1:
+        if ad_num==-1:
             Q.append(ad_num)
             continue
         M[ad_num] += bid
@@ -244,10 +245,11 @@ def test():
     Q, revenue = online_dual_lp(B, W, n, r, m, kw_nums, eps=0.2)
     return Q, revenue
 
+
 if __name__=="__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
     # do something
-    print(get_results('ds2')['revenue'])
+    print(get_results('ds3')['revenue'])
     # Q, revenue = test()
     # # print(revenue)
     """

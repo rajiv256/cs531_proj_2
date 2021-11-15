@@ -1,13 +1,20 @@
-import random
-
+import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
+from scipy.stats import binom
 
 from src.data_utils import create_data_vars
-
 
 BETA = 1.15
 # np.random.seed(256)
 
+
+def bar_plot(X):
+    x = range(len(X))
+    x = [str(i) for i in x]
+    data = {'x': x, 'y': X}
+    g = sns.barplot(x='x', y='y', data=data)
+    plt.savefig('fig.png')
 
 def discount(beta, x):
     return 1 - np.exp(beta*(x-1))
@@ -40,7 +47,6 @@ def online_weighted_greedy_step(B, M, W, n, kw_num, B_guess):
     return optimal_ad_num, optimal_bid
 
 
-
 def adwords_with_unknown_budgets_step(B, M, W, n, kw_num, Y):
     optimal_bid = 0
     disc_bid = -1
@@ -65,10 +71,9 @@ def adwords_with_unknown_budgets(B, W, n, r, m, kw_nums, B_guess):
     Q = [-1]*m
 
     # Y = np.random.uniform(low=0, high=1, size=n)
-    Y = np.random.binomial(1, p=0.8, size=n)
-    # for index in range(n):
-    #     if random.random() > 0.2:
-    #         Y[index] = min(Y[index] + 0.4, 0.9)
+    # Y = np.random.binomial(1.0, p=0.1, size=n)
+    Y = [binom.pmf(i, n, 0.5) for i in range(n)]
+    print(Y)
     for t in range(m):
         kw_num = kw_nums[t]
         # ad_num, bid = online_weighted_greedy_step(B, M, W, n, kw_num, B_guess)
@@ -97,12 +102,13 @@ def get_results(data_alias='ds0'):
     W = data['W']
     B = data['B']
     kw_nums = data['kw_nums']
-    B_guess = np.array(W).mean(axis=1)*m*(1 + random.random())
+
+    rands = np.random.random(n)
+    B_guess = np.array(W).max(axis=1)*m
+    # print(B_guess)
+    # print(B)
+    # bar_plot(B_guess)
     r = data['r']
-    for i in range(n):
-        for j in range(r):
-            if W[i][j] < 0:
-                W[i][j] = 0
 
     Q, revenue = adwords_with_unknown_budgets(B, W, n, r, m, kw_nums, B_guess)
     results = {
@@ -123,4 +129,6 @@ if __name__ == "__main__":
             rev = results['revenue']
             revenues[ds].append(rev)
     for ds in dss:
+        if ds not in revenues:
+            continue
         print(f'{round(np.mean(revenues[ds]),2)} ({round(np.std(revenues[ds]), 2)})')
