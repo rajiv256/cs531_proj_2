@@ -113,6 +113,7 @@ def naive_lp_solver(B, W, n, r, m, kw_nums):
 
     obj_value, values = max_lp_solver(c, A, b, bounds)
     X = values
+    print(np.array(values).reshape(n, m))
     Q, revenue = post_process(X, B, W, n, r, m, kw_nums)
     return Q, revenue
 
@@ -143,4 +144,24 @@ def get_results(data_alias='ds0'):
 
 if __name__ == "__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    print(get_results('ds3')['revenue'])
+    # print(get_results('ds3')['revenue'])
+
+    """
+    max −x1 + x2
+subject to x1 − x2 ≤ 2
+2x1 − x2 ≤ 6
+−x1 + x2 ≤ 4
+x1 ≤ 6
+x2 ≤ 8
+x1, x2 ≥ 0
+    """
+    # c = [-1, 1]
+    # A = [[2, -1], [-1, 1], [1, 0], [0, 1]]
+    # b = [6, 4, 6, 8]
+    # bounds = [(0, None)]*2
+    # obj, values = max_lp_solver(c, A, b, bounds)
+    # print(obj)
+
+    Q, revenue = get_results('ds3')
+    print(revenue)
+

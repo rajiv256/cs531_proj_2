@@ -1,3 +1,7 @@
+import random
+
+import numpy as np
+
 from src.data_utils import create_data_vars
 
 
@@ -24,7 +28,7 @@ def online_greedy_step(B, M, W, n, kw_num):
         if W[i][kw_num] == 0:
             continue
         if W[i][kw_num] <= (B[i]-M[i]):
-            if optimal_bid <= W[i][kw_num]:
+            if optimal_bid < W[i][kw_num]:
                 optimal_bid = W[i][kw_num]
                 optimal_ad_num = i
     return optimal_ad_num, optimal_bid
@@ -83,6 +87,24 @@ def get_results(data_alias='ds0'):
     return results
 
 
+def get_results_avg(data_alias='ds1'):
+    data = create_data_vars(data_alias)
+    print(data)
+    n = data['n']
+    m = data['m']
+    W = data['W']
+    B = data['B']
+    kw_nums = data['kw_nums']
+    r = data['r']
+    revenues = []
+    for i in range(100):
+        random.shuffle(kw_nums)
+        Q, revenue = online_greedy(B, W, n, r, m, kw_nums)
+        revenues.append(revenue)
+    print(np.mean(revenues), np.std(revenues))
+
+
 if __name__ == "__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    print(get_results('ds1')['revenue'])
+    print(get_results('ds3')['revenue'])
+    # get_results_avg('ds0')

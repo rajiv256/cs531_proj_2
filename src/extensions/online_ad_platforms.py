@@ -1,6 +1,7 @@
 """In this instantiation of the online AdWords problem, the #variables becomes
 n*m*(#slots)*
 """
+import random
 
 import numpy as np
 import pulp as pl
@@ -10,8 +11,13 @@ from src.data_utils import create_data_vars
 from src.pulp_utils import optimize_lp
 
 
-SLOTS = 3
-DISCOUNT_FACTOR = 0.1
+# SLOTS = 3
+# GAMMA = 0.99
+np.random.seed(256)
+
+
+def calc_slot_discount(slot_num):
+    return GAMMA ** slot_num
 
 
 def min_lp_solver(c, A_ub, b_ub, bounds):
@@ -55,7 +61,7 @@ def fill_A(n, m, W, kw_nums):
         m: #keywords
         kw_nums: number of the keyword coming to the queries.
     """
-    A = np.zeros([m + n, m * n * SLOTS])
+    A = np.zeros([m + n + m*n, m * n * SLOTS])
 
     # First m rows for the ∑_i ∑_s x_ijs <= 1 constraints
     for i in range(m):
@@ -69,9 +75,19 @@ def fill_A(n, m, W, kw_nums):
         for j in range(m):
             kw_num = kw_nums[j]
             for s in range(SLOTS):
-                A[m + i, i * m * SLOTS + j * SLOTS + s] = (1-s*DISCOUNT_FACTOR) * W[i][kw_num]
+                A[m + i, i * m * SLOTS + j * SLOTS + s] = calc_slot_discount(s) * W[i][kw_num]
 
-    # A has a total of m + n rows and m*n*SLOTS columns.
+    # Don't allow for single advertiser purchasing multiple slots.
+    for i in range(n):
+        for j in range(m):
+            for slot in range(SLOTS):
+            # constr = np.zeros((1, n*m*SLOTS))
+            # constr[0, i*m*SLOTS: i*m*SLOTS + SLOTS] = 1
+            # A = np.concatenate([A, constr], axis=0)
+                A[m + n + i*m + j, i*m*SLOTS + j*SLOTS + slot] = 1
+
+
+    # A has a total of m + n + mn rows and m*n*SLOTScolumns.
     return A
 
 
@@ -81,6 +97,9 @@ def fill_b(n, m, B):
     b[:m] = 1
     for i in range(n):
         b[m + i] = B[i]
+
+    # For making sure that the same advertiser won't bid on the same query more than once.
+    b[m+n:] = 1
     return b
 
 
@@ -92,7 +111,7 @@ def min_max_norm(arr):
             min_ = arr[i]
         if max_ < arr[i]:
             max_ = arr[i]
-    new_arr = [(arr[i]-min_)/(max_-min_ + 1e-9) for i in range(len(arr))]
+    new_arr = [(arr[i] - min_) / (max_ - min_ + 1e-9) for i in range(len(arr))]
     return new_arr
 
 
@@ -113,7 +132,8 @@ def online_greedy_step(B, M, W, n, kw_num):
     optimal_ad_num = [-1] * SLOTS
     optimal_bid = [0] * SLOTS
     for slot in range(SLOTS):
-        slot_discount = 1 - slot*DISCOUNT_FACTOR
+        # slot_discount = 1 - slot*DISCOUNT_FACTOR
+        slot_discount = calc_slot_discount(slot)
         for i in range(n):
 
             # 0 means no bid.
@@ -121,6 +141,10 @@ def online_greedy_step(B, M, W, n, kw_num):
                 continue
             if slot_discount * W[i][kw_num] <= (B[i] - M[i]):
                 if optimal_bid[slot] <= slot_discount * W[i][kw_num]:
+
+                    # Making sure an Ad doesn't come twice in a query.
+                    if i in optimal_ad_num:
+                        continue
                     optimal_bid[slot] = slot_discount * W[i][kw_num]
                     optimal_ad_num[slot] = i
     return optimal_ad_num, optimal_bid
@@ -142,7 +166,7 @@ def online_greedy(B, W, n, r, m, kw_nums):
     M = [0] * n
     revenue = 0
     Q = [[-1] * SLOTS] * m
-    freqs = [0]*r
+    freqs = [0] * r
     for t in range(len(kw_nums)):
         kw_num = kw_nums[t]
 
@@ -150,7 +174,7 @@ def online_greedy(B, W, n, r, m, kw_nums):
         freqs[kw_num] += 1
         ad_nums, bids = online_greedy_step(B, M, W, n, kw_num)
         for slot, (slot_ad_num, slot_bid) in enumerate(zip(ad_nums, bids)):
-            if slot_ad_num==-1:
+            if slot_ad_num == -1:
                 continue
             M[slot_ad_num] += slot_bid
             revenue += slot_bid
@@ -158,28 +182,31 @@ def online_greedy(B, W, n, r, m, kw_nums):
     return M, Q, revenue, freqs
 
 
-def online_weighted_greedy_step_with_dynamic_slots(B, M, W, alphas, n, kw_num, freqs_norm):
-
+def online_weighted_greedy_step_with_dynamic_slots(B, M, W, alphas, n, kw_num, kw_slots):
     # TODO(rajiv): Check the validity again.
 
-    slots = SLOTS + int(freqs_norm[kw_num]*SLOTS)
-
-
+    slots = kw_slots[kw_num]
     optimal_ad_nums = [-1] * slots
     optimal_bids = [0] * slots
     disc_bids = [-1] * slots
     for slot in range(slots):
-        slot_discount = (1 - DISCOUNT_FACTOR*slot)
+        # slot_discount = max(0.1, (1 - DISCOUNT_FACTOR*slot))
+        slot_discount = calc_slot_discount(slot)
         for i in range(n):
 
             # 0 means no bid.
-            if W[i][kw_num] == 0:
+            if W[i][kw_num]==0:
                 continue
 
             disc = (1 - alphas[i])
             slot_discounted_bid = slot_discount * W[i][kw_num]
             if slot_discounted_bid <= (B[i] - M[i]):
-                if disc_bids[slot] < disc * W[i][kw_num]:  # TODO(rajiv): This is correct. It could just be off by a constant factor.
+                if disc_bids[slot] < disc * W[i][kw_num]:
+
+                    # Making sure an Ad won't be placed twice in a query.
+                    if i in optimal_ad_nums:
+                        continue
+
                     disc_bids[slot] = disc * W[i][kw_num]
                     optimal_bids[slot] = slot_discounted_bid
                     optimal_ad_nums[slot] = i
@@ -187,12 +214,12 @@ def online_weighted_greedy_step_with_dynamic_slots(B, M, W, alphas, n, kw_num, f
 
 
 def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
-
     optimal_ad_nums = [-1] * SLOTS
     optimal_bids = [0] * SLOTS
     disc_bids = [-1] * SLOTS
     for slot in range(SLOTS):
-        slot_discount = (1 - DISCOUNT_FACTOR*slot)
+
+        slot_discount = calc_slot_discount(slot)
         for i in range(n):
 
             # 0 means no bid.
@@ -202,14 +229,16 @@ def online_weighted_greedy_step(B, M, W, alphas, n, kw_num):
             disc = (1 - alphas[i])
             slot_discounted_bid = slot_discount * W[i][kw_num]
             if slot_discounted_bid <= (B[i] - M[i]):
-                if disc_bids[slot] < disc * W[i][kw_num]:  # TODO(rajiv): This is correct. It could just be off by a constant factor.
+                if disc_bids[slot] < disc * W[i][kw_num]:
+                    if i in optimal_ad_nums:
+                        continue
                     disc_bids[slot] = disc * W[i][kw_num]
                     optimal_bids[slot] = slot_discounted_bid
                     optimal_ad_nums[slot] = i
     return optimal_ad_nums, optimal_bids
 
 
-def expand_W_with_slots_kwprobs(W, kw_nums, kw_probs):
+def expand_W_with_slots(W, kw_nums):
     """First executes np.take to get the n*r to n*m.
     Then expands the final dim to accommodate for the slot values.
     Args:
@@ -219,13 +248,23 @@ def expand_W_with_slots_kwprobs(W, kw_nums, kw_probs):
     Returns:
 
     """
-    W_kwprobs = np.multiply(W, kw_probs)
-    W_new = np.take(W_kwprobs, indices=kw_nums, axis=1)
+    W_new = np.take(W, indices=kw_nums, axis=1)
     W_slots = np.expand_dims(W_new, axis=2)  # n*m*1
     W_slots = np.repeat(W_slots, repeats=SLOTS, axis=2)  # n*m*SLOTS
-    discounting = [(1 - s*DISCOUNT_FACTOR) for s in range(SLOTS)]
+    # discounting = [(1 - s * DISCOUNT_FACTOR) for s in range(SLOTS)]
+    discounting = [calc_slot_discount(s) for s in range(SLOTS)]
     W_slots = W_slots * discounting
     return W_slots
+
+
+def redistribute_slots(kw_probs, total_slots):
+    softmax_probs = np.exp(kw_probs) / np.sum(np.exp(kw_probs))
+    softmax_probs = softmax_probs.tolist()
+    slots = [int(total_slots * prob) for prob in softmax_probs]
+    rem_slots = total_slots - sum(slots)
+    for i in range(rem_slots):
+        slots[i] += 1
+    return slots
 
 
 def online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps):
@@ -244,11 +283,16 @@ def online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps):
 
     """
     eps_m = int(eps * m)
+    # Incorporating click probabilities.
+    for i in range(len(W)):
+        for j in range(len(W[0])):
+            W[i][j] *= kw_probs[i]
+
     M, Q, revenue, freqs = online_greedy(B, W, n, r, eps_m, kw_nums[:eps_m])
 
-    freqs_norm = min_max_norm(freqs)
 
-    c = np.array(expand_W_with_slots_kwprobs(W, kw_nums, kw_probs))[:, :eps_m, :].flatten()
+
+    c = np.array(expand_W_with_slots(W, kw_nums))[:, :eps_m, :].flatten()
     A = fill_A(n, eps_m, W, kw_nums[:eps_m])
     b = fill_b(n, eps_m, B)
     c_du, A_du, b_du = get_adword_dual(c, A, b)
@@ -257,11 +301,12 @@ def online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps):
     obj_value, values = min_lp_solver(c_du, A_du, b_du, bounds)
     alphas = values[eps_m:]
 
+    slots = redistribute_slots(kw_probs, SLOTS * m)
+    print(f'sum slots: {sum(slots)}')
     for t in range(eps_m, m):
         Q.append([])
-        ad_nums, bids = online_weighted_greedy_step_with_dynamic_slots(B, M, W, alphas, n, kw_nums[t], freqs_norm)
+        ad_nums, bids = online_weighted_greedy_step_with_dynamic_slots(B, M, W, alphas, n, kw_nums[t], slots)
         # ad_nums, bids = online_weighted_greedy_step(B, M, W, alphas, n, kw_nums[t])
-
         for slot, (ad_num, bid) in enumerate(zip(ad_nums, bids)):
             if ad_num == -1:
                 Q[t].append(ad_num)
@@ -269,6 +314,7 @@ def online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps):
             M[ad_num] += bid
             revenue += bid
             Q[t].append(ad_num)
+        print(f't: {t} | revenue: {revenue}')
     msum = sum(M)
     return Q, msum  # revenue also gives the same answer
 
@@ -290,15 +336,10 @@ def get_results(data_alias='ds0'):
     kw_nums = data['kw_nums']
     r = data['r']
 
-    #TODO(rajiv) Draw kw_nums from a gaussian
-    mu = r // 2
-    sigma = r // 8
-    kw_nums = np.random.standard_normal(size=m) * sigma + mu
-    kw_nums = [int(kw_num) for kw_num in kw_nums]
-    kw_nums = [max(0, min(r-1, item)) for item in kw_nums]
-    print(kw_nums)
+    for i in range(n):
+        B[i] *= 5
 
-    kw_probs = [0.2 for i in range(r)]
+    kw_probs = [random.random() for i in range(r)]
     Q, revenue = online_dual_lp(B, W, n, r, m, kw_nums, kw_probs, eps=0.1)
     results = {
         'Q': Q,
@@ -308,15 +349,51 @@ def get_results(data_alias='ds0'):
 
 
 if __name__=="__main__":
-    # When testing, substitute the variables n, m, W, B with appropriate values.
-    # do something
-    print(get_results('ds3')['revenue'])
-    # B = [20, 20]
-    # W = [[1, 1, 1],
-    #      [2, 2, 2],
-    #      [3, 3, 3],
-    #      [4, 4, 4]]
-    # kw_nums = [0, 1, 2]
-    # A = fill_A(len(B), len(kw_nums), W, kw_nums)
-    # print(A)
-
+    slots = [2, 3, 4, 5]
+    gammas = [0.99, 0.95, 0.9, 0.85, 0.8, 0.7]
+    '''
+    
+    for slots_i in slots:
+        for gamma in gammas:
+            SLOTS = slots_i
+            GAMMA = gamma
+            revenue = get_results('ds3')['revenue']
+            results.append((slots_i, gamma, revenue))
+    s = ''
+    for item in results:
+        gamma = item[1]
+        s += str(item[2]) + ','
+        if gamma == 0.7:
+            print(s)
+            s = ''
+'''
+    '''
+    
+    results = []
+    slots = [5]
+    gammas = [0.7]
+    for slot in slots:
+        for gamma in gammas:
+            avg = []
+            for t in range(10):
+                SLOTS = slot
+                GAMMA = gamma
+                revenue = get_results('ds3')['revenue']
+                avg.append(revenue)
+            revenue = sum(avg)/len(avg)
+            results.append(revenue)
+    for res in results:
+        print(res)
+        # for j in range(len(gammas)):
+        #     s += str(item[2]) + ','
+        # print(s)
+'''
+    slots = [3, 5]
+    gammas = [0.9]
+    results = []
+    for slot in slots:
+        for gamma in gammas:
+            SLOTS = slot
+            GAMMA = gamma
+            revenue = get_results('ds3')['revenue']
+            results.append(revenue)

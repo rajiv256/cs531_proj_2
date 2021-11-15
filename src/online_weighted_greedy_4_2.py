@@ -1,10 +1,12 @@
+import random
+
 import numpy as np
 
 from src.data_utils import create_data_vars
 
 
 def discount(B_i, M_i):
-    return 1 - np.exp(M_i / (B_i + 1e-9) - 1)
+    return 1 - np.exp((M_i / (B_i+1e-9)) - 1)
 
 
 def online_weighted_greedy_step(B, M, W, n, kw_num):
@@ -14,8 +16,8 @@ def online_weighted_greedy_step(B, M, W, n, kw_num):
 
     for i in range(n):
         # 0 means no bid.
-        # print(f'i: {i} | kw_num: {kw_num}| discount: {discount(B[i], M[i])} | wij: {W[i][kw_num]} | bid: {discount(B[i], M[i])*W[i][kw_num]}')
-        if W[i][kw_num]==0:
+        # # print(f'i: {i} | kw_num: {kw_num}| discount: {discount(B[i], M[i])} | wij: {W[i][kw_num]} | bid: {discount(B[i], M[i])*W[i][kw_num]}')
+        if W[i][kw_num] == 0:
             # print(f'ad: {i} | bid: 0 | skipping')
             continue
         if W[i][kw_num] <= (B[i] - M[i]):
@@ -48,7 +50,7 @@ def online_weighted_greedy(B, W, n, r, m, kw_nums):
     Q = [-1] * m
 
     for t in range(m):
-        print(f'iter: {t} | B: {B} | M: {M}')
+        # print(f'iter: {t} | B: {B} | M: {M}')
         kw_num = kw_nums[t]
         ad_num, bid = online_weighted_greedy_step(B, M, W, n, kw_num)
         if ad_num == -1:
@@ -83,7 +85,24 @@ def get_results(data_alias='ds0'):
     return results
 
 
+def get_results_avg(data_alias='ds1'):
+    data = create_data_vars(data_alias)
+    print(data)
+    n = data['n']
+    m = data['m']
+    W = data['W']
+    B = data['B']
+    kw_nums = data['kw_nums']
+    r = data['r']
+    revenues = []
+    for i in range(100):
+        random.shuffle(kw_nums)
+        Q, revenue = online_weighted_greedy(B, W, n, r, m, kw_nums)
+        revenues.append(revenue)
+    print(np.mean(revenues), np.std(revenues))
+
 if __name__ == "__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    print(get_results('ds1'))
-    print(get_results('ds1')['revenue'])
+
+    print(get_results('ds3')['revenue'])
+    # print(get_results_avg('ds1_mini'))

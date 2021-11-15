@@ -149,4 +149,4 @@ def get_results(data_alias='ds0'):
 
 if __name__=="__main__":
     # When testing, substitute the variables n, m, W, B with appropriate values.
-    print(get_results('ds0')['revenue'])
+    print(get_results('ds_test')['revenue'])
