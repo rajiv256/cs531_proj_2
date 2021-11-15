@@ -7,6 +7,8 @@
 - `scripts`: Some experiments with `pulp` and data files.
 - `src/pulp_utils.py`: Functions for creating optimization variables, constraints, objectives etc.,
 - `src/data_utils.py`: Contains preprocessing utils for data pickle files. We will get the B, W, A etc., from here.
+- `src/extensions`: Contains the code for extensions
+- `src/issues`: Contains code for simulating various issues with the algorithms
 
 # Before Running the project
 Navigate to the root folder of the project and run
@@ -17,7 +19,7 @@ from your terminal and run the following command.
 > export PYTHONPATH=`pwd`
 
 You should be able to run any file now using the command
->python3 src/<filename>.py
+>python3 <relative_path_from_project_root>.py
 
 Please ask me in case you encounter any issues with running the scripts.
 
